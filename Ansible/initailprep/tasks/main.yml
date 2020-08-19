@@ -1,0 +1,131 @@
+---
+# tasks file for initailprep
+- name: Saving the env vars to be used in other roles
+  set_fact:
+    envname: "{{ ENVNAME }}"
+
+- name: Add the user 'sa' and a primary group of 'admin'
+  user:
+    name: sa
+    comment: system admin
+    shell: /bin/bash
+    createhome: yes
+    skeleton: /etc/skel
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    group: admin
+
+- name: Ensure group "prod" exists
+  group:
+    name: prod
+    state: present
+
+- name: Add the user 'rsms'
+  user:
+    name: rsms
+    comment: RO only user
+    shell: /bin/bash
+    createhome: yes
+    skeleton: /etc/skel
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    group: prod
+
+- name: Allow 'sa' to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^sa'
+    line: 'sa   ALL=(ALL) NOPASSWD:ALL'
+    validate: 'visudo -cf %s'
+
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: yes
+
+- name: Make a copy of security repos
+  shell: cat /etc/apt/sources.list|grep secu >/etc/apt/security.sources.list
+
+- name: Update cache
+  apt: update_cache=yes
+
+- name: Install security updates
+  shell: apt upgrade -oDir::Etc::SourceList=/etc/apt/security.sources.list --force-yes -y
+
+- name: Install  dependencies
+  apt:
+    pkg:
+      - python-setuptools
+      - awscli
+      - jq
+      - python-pip
+      - wget
+      - ruby
+      - python-mysqldb
+      - libmysqlclient-dev
+      - mysql-client-core-5.7
+      - python3-pymysql
+      - unzip
+      - libwww-perl
+      - libdatetime-perl
+    state: present
+    update_cache: yes
+    cache_valid_time: 604800
+
+- name: Directory for saving cfn init files
+  file:
+    path: /opt/aws-cfn-bootstrap-latest
+    state: directory
+    mode: "u=rwx,g=wxx,o=rx"
+
+- name: Download cfn init files
+  get_url: url=https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz dest=/opt/aws-cfn-bootstrap-latest.tar.gz
+
+- name: Extract the above archive
+  shell: /bin/tar xzf /opt/aws-cfn-bootstrap-latest.tar.gz -C /opt/aws-cfn-bootstrap-latest --strip-components 1
+  args:
+    warn: no
+
+- name: Install cfn init
+  shell: cd /opt/aws-cfn-bootstrap-latest; python setup.py install
+
+- name: Symlink install directory
+  file: src=/opt/aws-cfn-bootstrap-latest/init/ubuntu/cfn-hup path=/etc/init.d/cfn-hub state=link
+
+- meta: flush_handlers
+
+- name: Saving the vars to be used in other roles
+  set_fact:
+    freshinstall: "{{ value_data.stdout }}"
+
+- name: Copy crontab if exists
+  shell: crontab pre-install/files/cron.txt
+
+# Install multi python packages with version specifiers
+- pip:
+    name: "{{ item }}"
+  loop:
+    - configparser
+    - datetime
+    - logging
+    - pandas
+    - PyMySQL
+
+- name: Unarchive a Cloudwatch agent
+  unarchive:
+    src: https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip
+    dest: /opt/
+    mode: 0755
+    remote_src: yes
+  when: (envname == "prod") and (envname|length > 0)
+
+- name: Creates cron for cloudwatch agent to send report
+  cron:
+    name: "Cloudwatch agent every single minute"
+    cron_file: "cloudwatch-agent"
+    user: "ubuntu"
+    job: "/opt/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-path=/rsms/ --disk-space-util --auto-scaling --from-cron"
+  when: (envname == "prod") and (envname|length > 0)

@@ -1,0 +1,4 @@
+---
+# handlers file for initailprep
+- name: restart codedeployAgent
+  service: name=codedeploy-agent state=restarted
