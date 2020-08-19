@@ -61,13 +61,11 @@
       - python-setuptools
       - awscli
       - jq
+      - python-dev
       - python-pip
       - wget
       - ruby
-      - python-mysqldb
-      - libmysqlclient-dev
-      - mysql-client-core-5.7
-      - python3-pymysql
+      - build-essential
       - unzip
       - libwww-perl
       - libdatetime-perl

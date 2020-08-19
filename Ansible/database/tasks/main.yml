@@ -1,3 +1,83 @@
 ---
-# tasks file for database
+# tasks file for db setup
 
+- name: Saving the vars to be used in other roles customer type common or customer
+  set_fact:
+    customerType: common
+
+- name: Installing MySQL server
+  apt:
+    pkg:
+      - mysql-server
+      - python-mysqldb
+      - python3-flask
+    state: present
+    update_cache: yes
+    cache_valid_time: 604800
+
+- name: Changing root pass
+  shell: mysql -p"" -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ DBPASSWORD }}';FLUSH PRIVILEGES;"
+
+- name: Create a new database # DBURL not specified, in common localhost is used by default
+  mysql_db:
+    name: "{{ DBNAME }}"
+    login_user: "{{ DBUSERNAME }}"
+    login_password: "{{ DBPASSWORD }}"
+    state: present
+  become: yes
+
+- name: Create a new user rsms
+  mysql_user:
+    name: rsms
+    host: '%'
+    password: "{{ DBAPPPASS }}"
+    login_host: "{{ DBURL }}"
+    login_user: "{{ DBUSERNAME }}"
+    login_password: "{{ DBPASSWORD }}"
+    priv: '*.*:CREATE,EXECUTE,SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,RELOAD,PROCESS,REFERENCES,INDEX,ALTER,SHOW DATABASES,CREATE TEMPORARY TABLES,LOCK TABLES,EXECUTE,REPLICATION SLAVE,REPLICATION CLIENT,CREATE VIEW,SHOW VIEW,CREATE ROUTINE,ALTER ROUTINE,CREATE USER,EVENT,TRIGGER'
+    state: present
+  become: yes
+
+#- name: Create new user
+#  shell: mysql -u "{{ DBUSERNAME }}" -h"{{ DBURL }}" -p'{{ DBPASSWORD }}' --protocol=tcp  -P 3306 -e "use mysql;CREATE USER IF NOT EXISTS 'rsms'@'%' IDENTIFIED BY '{{ DBPASSWORD }}';GRANT EXECUTE, SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, RELOAD, PROCESS, REFERENCES, INDEX, ALTER, SHOW DATABASES, CREATE TEMPORARY TABLES, LOCK TABLES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, CREATE VIEW, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, CREATE USER, EVENT, TRIGGER ON *.* TO 'rsms'@'%' WITH GRANT OPTION;FLUSH PRIVILEGES;"
+
+- name: Stop mysql service
+  service:
+    name: mysql
+    state: stopped
+
+- name: Update mysql my.cnf configuration
+  template:
+    src: templates/my.cnf.j2
+    dest: /etc/mysql/mysql.cnf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Insert a line at the end of a file required since we are changing the path of default MySQL path.
+  lineinfile:
+    path: /etc/apparmor.d/tunables/alias
+    line: "alias /var/lib/mysql/ -> /{{ PRODUCTNAME }}/mysql/,"
+
+- name: Restart apparmor service
+  service:
+    name: apparmor
+    state: restarted
+  tags:
+    - common
+
+#Pause for 30 seconds for apparmor to be fully up.
+- pause:
+    seconds: 10
+
+- name: Restart mysql service
+  service:
+    name: mysql
+    state: restarted
+
+#- name: Install schemas based on customer type "common|customer"
+#  shell: bash setup-db/scripts/install-db-schemas.sh {{ customerType }}
+#  when: (freshinstall == "data") and (freshinstall|length > 0)
+#  tags:
+#    - common
+#    - customer
