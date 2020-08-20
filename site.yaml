@@ -1,0 +1,27 @@
+---
+- hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  roles:
+    # using YAML shorthand, this is equivalent to the above:
+    - { role: initalprep }
+
+- hosts: db
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  roles:
+    # using YAML shorthand, this is equivalent to the above:
+    - { role: database }
+
+- hosts: web
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  roles:
+    # using YAML shorthand, this is equivalent to the above:
+    - { role: webserver }
