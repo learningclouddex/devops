@@ -6,7 +6,7 @@
 
   roles:
     # using YAML shorthand, this is equivalent to the above:
-    - { role: initalprep }
+    - role: initalprep 
 
 - hosts: db
   remote_user: root
@@ -15,7 +15,8 @@
 
   roles:
     # using YAML shorthand, this is equivalent to the above:
-    - { role: database }
+    - role: database
+      when: ansible_facts['os_family'] == 'Debian'
 
 - hosts: web
   remote_user: root
@@ -24,4 +25,6 @@
 
   roles:
     # using YAML shorthand, this is equivalent to the above:
-    - { role: webserver }
+    - role: webserver
+      when: ansible_facts['os_family'] == 'Amazon'
+
