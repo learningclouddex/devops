@@ -2,7 +2,7 @@
 # vars file for database
 ### DB
 DBUSERNAME: db_user
-DBPASSWORD: XXXDBPASSWORDXXX
+DBPASSWORD: password
 DBNAME: employee_db
-DBURL: XXXDBURLXXX
-DBAPPPASS: XXXDBAPPPASSXXX
+DBURL: localhost
+DBAPPPASS: password
