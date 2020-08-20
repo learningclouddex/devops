@@ -8,7 +8,7 @@
 - name: Installing MySQL server
   apt:
     pkg:
-      - mysql-server
+      - mysql-serverapp.py
       - python-mysqldb
       - python3-flask
     state: present
@@ -26,9 +26,9 @@
     state: present
   become: yes
 
-- name: Create a new user rsms
+- name: Create a new user
   mysql_user:
-    name: rsms
+    name: user
     host: '%'
     password: "{{ DBAPPPASS }}"
     login_host: "{{ DBURL }}"
@@ -63,8 +63,6 @@
   service:
     name: apparmor
     state: restarted
-  tags:
-    - common
 
 #Pause for 30 seconds for apparmor to be fully up.
 - pause:
@@ -81,3 +79,12 @@
 #  tags:
 #    - common
 #    - customer
+
+- name: Template a file to /etc/files.conf
+  template:
+    src: template/app.py.j2
+    dest: /opt/
+    owner: root
+    group: root
+    mode: '0644'
+
