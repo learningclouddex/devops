@@ -1,2 +1,30 @@
 ---
 # tasks file for webserver
+- name: Install apache packages
+  yum:
+    name: httpd
+    state: present
+
+- name: ensure httpd is running
+  service:
+    name: httpd
+    state: started
+
+- name: Open port 80 for http access
+  firewalld:
+    service: http
+    permanent: true
+    state: enabled
+
+- name: Restart the firewalld service to load in the firewall changes
+  service:
+    name: firewalld
+    state: restarted
+
+- name: copy content file to apache
+  copy:
+    src: files/flower.jpg
+    dest: /var/www/html/flower.jpg
+    owner: root
+    group: root
+    mode: '0777'

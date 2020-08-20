@@ -5,6 +5,13 @@
   set_fact:
     customerType: common
 
+# Install multi python packages with version specifiers
+- pip:
+    name: "{{ item }}"
+  loop:
+    - flask-mysql
+    - flask
+
 - name: Installing MySQL server
   apt:
     pkg:
@@ -54,11 +61,6 @@
     group: root
     mode: '0644'
 
-- name: Insert a line at the end of a file required since we are changing the path of default MySQL path.
-  lineinfile:
-    path: /etc/apparmor.d/tunables/alias
-    line: "alias /var/lib/mysql/ -> /{{ PRODUCTNAME }}/mysql/,"
-
 - name: Restart apparmor service
   service:
     name: apparmor
@@ -80,11 +82,13 @@
 #    - common
 #    - customer
 
-- name: Template a file to /etc/files.conf
+- name: Template a file to app.py
   template:
     src: template/app.py.j2
-    dest: /opt/
+    dest: /opt/app.py
     owner: root
     group: root
     mode: '0644'
 
+- name: Run the flask
+  shell: 'FLASK_APP=/opt/app.py flask run --host=0.0.0.0'
