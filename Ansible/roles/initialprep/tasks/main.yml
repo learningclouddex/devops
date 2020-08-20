@@ -62,7 +62,7 @@
 
 - name: Update cache
   yum: update_cache=yes
-  when: ansible_facts['os_family'] == 'Amazon' 
+  when: ansible_facts['os_family'] == 'RedHat' 
 
 - name: Install security updates
   shell: apt upgrade -oDir::Etc::SourceList=/etc/apt/security.sources.list --force-yes -y
@@ -86,6 +86,25 @@
     update_cache: yes
     cache_valid_time: 604800
   when: ansible_facts['os_family'] == 'Debian' 
+
+- name: Install  dependencies
+  yum:
+    name:
+      - python-setuptools
+      - awscli
+      - jq
+      - python-dev
+      - python-pip
+      - wget
+      - ruby
+      - build-essential
+      - unzip
+      - libwww-perl
+      - libdatetime-perl
+    state: present
+    update_cache: yes
+    cache_valid_time: 604800
+  when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Directory for saving cfn init files
   file:

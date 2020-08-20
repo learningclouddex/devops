@@ -8,7 +8,7 @@
     - role: initialprep 
 
 - hosts: db
-  remote_user: root
+  remote_user: ubuntu
   become: yes
   become_method: sudo
 
@@ -18,12 +18,12 @@
       when: ansible_facts['os_family'] == 'Debian'
 
 - hosts: web
-  remote_user: root
+  remote_user: ec2-user
   become: yes
   become_method: sudo
 
   roles:
     # using YAML shorthand, this is equivalent to the above:
     - role: webserver
-      when: ansible_facts['os_family'] == 'Amazon'
+      when: ansible_facts['os_family'] == 'RedHat'
 

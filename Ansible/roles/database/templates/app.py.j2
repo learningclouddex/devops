@@ -9,10 +9,10 @@ mysql = MySQL()
 mysql_database_host = 'MYSQL_DATABASE_HOST' in os.environ and os.environ['MYSQL_DATABASE_HOST'] or  'localhost'
 
 # MySQL configurations
-app.config['MYSQL_DATABASE_USER'] =  {{ DBUSERNAME }}
-app.config['MYSQL_DATABASE_PASSWORD'] = {{ DBPASSWORD }}
-app.config['MYSQL_DATABASE_DB'] = {{ DBNAME }}
-app.config['MYSQL_DATABASE_HOST'] = mysql_database_host
+app.config['MYSQL_DATABASE_USER'] =  '{{ DBUSERNAME }}'
+app.config['MYSQL_DATABASE_PASSWORD'] = '{{ DBPASSWORD }}'
+app.config['MYSQL_DATABASE_DB'] = '{{ DBNAME }}'
+app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
 conn = mysql.connect()
