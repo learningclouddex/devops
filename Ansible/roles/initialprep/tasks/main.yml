@@ -4,6 +4,11 @@
   set_fact:
     envname: "{{ ENVNAME }}"
 
+- name: Ensure group "admin" exists
+  group:
+    name: admin
+    state: present
+
 - name: Add the user 'sa' and a primary group of 'admin'
   user:
     name: sa
@@ -45,15 +50,23 @@
   become: true
   apt:
     upgrade: yes
+  when: ansible_facts['os_family'] == 'Debian' 
 
 - name: Make a copy of security repos
   shell: cat /etc/apt/sources.list|grep secu >/etc/apt/security.sources.list
+  when: ansible_facts['os_family'] == 'Debian' 
 
 - name: Update cache
   apt: update_cache=yes
+  when: ansible_facts['os_family'] == 'Debian' 
+
+- name: Update cache
+  yum: update_cache=yes
+  when: ansible_facts['os_family'] == 'Amazon' 
 
 - name: Install security updates
   shell: apt upgrade -oDir::Etc::SourceList=/etc/apt/security.sources.list --force-yes -y
+  when: ansible_facts['os_family'] == 'Debian' 
 
 - name: Install  dependencies
   apt:
@@ -72,6 +85,7 @@
     state: present
     update_cache: yes
     cache_valid_time: 604800
+  when: ansible_facts['os_family'] == 'Debian' 
 
 - name: Directory for saving cfn init files
   file:
@@ -95,12 +109,14 @@
 
 - meta: flush_handlers
 
-- name: Saving the vars to be used in other roles
-  set_fact:
-    freshinstall: "{{ value_data.stdout }}"
-
-- name: Copy crontab if exists
-  shell: crontab pre-install/files/cron.txt
+- name: Copy a new ntp.conf file into place, backing up the original if it differs from the copied version
+  copy:
+    src: files/cron.txt
+    dest: /etc/crontab
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
 
 # Install multi python packages with version specifiers
 - pip:

@@ -15,7 +15,7 @@
 - name: Installing MySQL server
   apt:
     pkg:
-      - mysql-serverapp.py
+      - mysql-server
       - python-mysqldb
       - python3-flask
     state: present

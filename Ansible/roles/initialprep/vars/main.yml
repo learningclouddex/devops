@@ -2,4 +2,4 @@
 # vars file for initailprep
 ### APP
 REGION: XXXREGIONXXX
-ENVNAME: XXXENVNAMEXXX
+ENVNAME: prod

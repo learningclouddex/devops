@@ -1,0 +1,1 @@
+*	*	*	*	*	`sh /opt/somescript.sh`
