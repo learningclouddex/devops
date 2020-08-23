@@ -1,0 +1,279 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Template for creating the main ALB'
+Parameters:
+  EnvName:
+    Description: Environment
+    Type: String
+    MinLength: '3'
+    MaxLength: '5'
+    Default: "dev"
+    AllowedPattern: '^[a-zA-Z]{0,5}'
+    ConstraintDescription: Max 5 characters - eg, dev, uat, prod
+  ALBCertArn:
+    Description: Provide the certification ARN for Network Load Balancer
+    Type: String
+    Default: "arn:aws:acm:us-east-1:769377447000:certificate/f901e7cc-8b44-46c2-93fd-cef657562617"
+  EmailAddress:
+    Description: Email Address for SNS topic / Alerts
+    Type: String
+    Default: test@test.test
+    MinLength: '10'
+    MaxLength: '40'
+Conditions:
+  CreateProdResources: !Equals
+    - !Ref EnvName
+    - prod
+  CreateDevResources: !Equals
+    - !Ref EnvName
+    - dev
+Resources:
+  ApplicationLoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Subnets:
+        - Fn::ImportValue: !Sub "RSMS-${EnvName}-CommonPublicSubnet1"
+        - Fn::ImportValue: !Sub "RSMS-${EnvName}-CommonPublicSubnet2"
+      SecurityGroups:
+        - !Ref sgCommonLB
+      Tags:
+        - Key: Name
+          Value: !Sub "Common-${EnvName}-ALB"
+  ALBListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref commonALBTG
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: '443'
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref ALBCertArn
+  customer1ListenerRule1:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref customer1ALBTG
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - "/opco/*"
+      ListenerArn: !Ref ALBListener
+      Priority: 1
+  customer1ALBTG:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub "opco-${EnvName}-ALB-TG"
+      HealthCheckPath: "/opco/index.html"
+      HealthCheckIntervalSeconds: 10
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Port: 8080
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId:
+        Fn::ImportValue: !Sub "RSMS-${EnvName}-VPCID"
+      Tags:
+        - Key: Name
+          Value: !Sub "opco-${EnvName}-ALB-TG"
+  customer2ListenerRule2:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref customer2ALBTG
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - "/customer2/*"
+      ListenerArn: !Ref ALBListener
+      Priority: 2
+  customer2ALBTG:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub "customer2-${EnvName}-ALB-TG"
+      HealthCheckPath: "/customer2/index.html"
+      HealthCheckIntervalSeconds: 10
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Port: 8080
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId:
+        Fn::ImportValue: !Sub "RSMS-${EnvName}-VPCID"
+      Tags:
+        - Key: Name
+          Value: !Sub "customer2-${EnvName}-ALB-TG"
+  commonALBTG:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub "common-${EnvName}-ALB-TG"
+      HealthCheckPath: "/common/index.html"
+      HealthCheckIntervalSeconds: 10
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Port: 8080
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId:
+        Fn::ImportValue: !Sub "RSMS-${EnvName}-VPCID"
+      Tags:
+        - Key: Name
+          Value: !Sub "default-${EnvName}-ALB-TG"
+  commonListenerRule3:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref commonALBTG
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - "/common/*"
+      ListenerArn: !Ref ALBListener
+      Priority: 3
+  commonCust3ListenerRule4:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - RedirectConfig:
+            Host: "#{host}"
+            Path: "/common/"
+            Port: "#{port}"
+            Protocol: "HTTPS"
+            Query: "#{query}"
+            StatusCode: HTTP_301
+          Type: "redirect"
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - "/demo/*"
+      ListenerArn: !Ref ALBListener
+      Priority: 4
+  commonCust4ListenerRule5:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - RedirectConfig:
+            Host: "#{host}"
+            Path: "/common/"
+            Port: "#{port}"
+            Protocol: "HTTPS"
+            Query: "#{query}"
+            StatusCode: HTTP_301
+          Type: "redirect"
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - "/efgi/*"
+      ListenerArn: !Ref ALBListener
+      Priority: 5
+  sgCommonLB:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allow HTTPS to the public
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: 0.0.0.0/0
+      VpcId:
+        Fn::ImportValue: !Sub "RSMS-${EnvName}-VPCID"
+      Tags:
+        - Key: Name
+          Value: !Sub "Common-${EnvName}-sg-public"
+  AlertSnsTopicArn:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      Subscription:
+        - Endpoint: !Ref EmailAddress
+          Protocol: email
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvName}-SNST'
+  AlarmTG4XXCount:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the number of HTTPCode_Target_4XX_Count is >= 20 for peroids of 1 minutes= 1 x 60s
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: '1'
+      Statistic: Average
+      MetricName: HTTPCode_Target_4XX_Count
+      AlarmActions:
+        - !Ref AlertSnsTopicArn
+      Namespace: AWS/ApplicationELB
+      Period: '60'
+      Threshold: '10'
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !Join
+            - '/'
+            - - 'app'
+              - !Select [2, !Split ["/", !Ref ApplicationLoadBalancer]]
+              - !Select [3, !Split ["/", !Ref ApplicationLoadBalancer]]
+  AlarmTG5XXCount:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the number of HTTPCode_Target_5XX_Count is >= 20 for peroids of 1 minutes= 1 x 60s
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: '1'
+      Statistic: Average
+      MetricName: HTTPCode_Target_5XX_Count
+      AlarmActions:
+        - !Ref AlertSnsTopicArn
+      Namespace: AWS/ApplicationELB
+      Period: '60'
+      Threshold: '10'
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !Join
+            - '/'
+            - - 'app'
+              - !Select [2, !Split ["/", !Ref ApplicationLoadBalancer]]
+              - !Select [3, !Split ["/", !Ref ApplicationLoadBalancer]]
+Outputs:
+  commonALBTG:
+    Description: 'Default target group for ALB'
+    Value: !Ref commonALBTG
+    Export:
+      Name: !Sub "default-${EnvName}-TargetGroupALB"
+  sgCommonLB:
+    Description: 'SG group ID of ALB'
+    Value: !Ref sgCommonLB
+    Export:
+      Name: !Sub "default-${EnvName}-ALB-SG-ID"
+  ALBArn:
+    Description: 'ALB Arn'
+    Value: !Ref ApplicationLoadBalancer
+    Export:
+      Name: !Sub "ALBArn-${EnvName}"
+  customer1ALBTG:
+    Description: 'Default target group for Customer1 ALB'
+    Value: !Ref customer1ALBTG
+    Export:
+      Name: !Sub "opco-${EnvName}-TargetGroupALB"
+  customer2ALBTG:
+    Description: 'Default target group for Customer2 ALB'
+    Value: !Ref customer2ALBTG
+    Export:
+      Name: !Sub "customer2-${EnvName}-TargetGroupALB"
+  SNST:
+    Description: 'Default SNS topic'
+    Value: !Ref AlertSnsTopicArn
+    Export:
+      Name: !Sub "${EnvName}-SNST"
+  ALBURL:
+    Description: The URL of Application Load Balancer
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !GetAtt
+          - ApplicationLoadBalancer
+          - DNSName

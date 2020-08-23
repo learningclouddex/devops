@@ -1,0 +1,802 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'This template will generate all the resources required for a Common EC2 Mysql stack'
+Parameters:
+  CustomerName:
+    Description: The short name of the customer
+    Type: String
+    MinLength: '3'
+    MaxLength: '20'
+    Default: "Common"
+    ConstraintDescription: ex, orang, apple
+  EnvName:
+    Description: Environment Name
+    Type: String
+    MinLength: '3'
+    MaxLength: '5'
+    Default: "dev"
+    AllowedPattern: '^[a-zA-Z]{0,5}'
+    ConstraintDescription: Max 5 characters - eg, dev, uat, prod
+  ProductName:
+    Description: Product Name (max 20 characters)
+    Type: String
+    MinLength: '3'
+    MaxLength: '20'
+    Default: "xyzproduct"
+    AllowedPattern: '^[a-zA-Z]{0,20}'
+    ConstraintDescription: Maximum 20 characters
+  ApplicationName:
+    Description: Product Name (max 20 characters)
+    Type: String
+    MinLength: '3'
+    MaxLength: '20'
+    Default: "xyzapp"
+    AllowedPattern: '^[a-zA-Z]{0,20}'
+    ConstraintDescription: Maximum 20 characters
+  EBSVolumeSize:
+    Description: 'Enter the size of the EBS volume required in GBs'
+    Type: Number
+    Default: 10
+    MinValue: 10
+    MaxValue: 10000
+    ConstraintDescription: 'Must be in the range [10-10000]GB'
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: "Siva"
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: App server EC2 instance type
+    Type: String
+    Default: t2.small
+    AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.medium
+      - m1.large
+      - m1.xlarge
+      - m2.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - c1.medium
+      - c1.xlarge
+      - c3.large
+      - c3.xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - g2.2xlarge
+      - g2.8xlarge
+      - r3.large
+      - r3.xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+      - i2.xlarge
+      - i2.2xlarge
+      - i2.4xlarge
+      - i2.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - hi1.4xlarge
+      - hs1.8xlarge
+      - cr1.8xlarge
+      - cc2.8xlarge
+      - cg1.4xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+  WhitelistedIPs:
+    Description: List of the whitelisted IPs
+    Type: String
+    Default: 0.0.0.0/0
+  branch:
+    Description: Git branch Name that needs to be checkout for the given giturl in SSM
+    Type: String
+    Default: "master"
+  DBName:
+    Default: rsms
+    Description: The rsms database nae
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  SetupAlarms:
+    Description: Setup Cloudwatch Alarms?
+    Type: String
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+Mappings:
+  AWSInstanceType2Arch:
+    t1.micro:
+      Arch: HVM64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+    m1.small:
+      Arch: HVM64
+    m1.medium:
+      Arch: HVM64
+    m1.large:
+      Arch: HVM64
+    m1.xlarge:
+      Arch: HVM64
+    m2.xlarge:
+      Arch: HVM64
+    m2.2xlarge:
+      Arch: HVM64
+    m2.4xlarge:
+      Arch: HVM64
+    m3.medium:
+      Arch: HVM64
+    m3.large:
+      Arch: HVM64
+    m3.xlarge:
+      Arch: HVM64
+    m3.2xlarge:
+      Arch: HVM64
+    m4.large:
+      Arch: HVM64
+    m4.xlarge:
+      Arch: HVM64
+    m4.2xlarge:
+      Arch: HVM64
+    m4.4xlarge:
+      Arch: HVM64
+    m4.10xlarge:
+      Arch: HVM64
+    c1.medium:
+      Arch: HVM64
+    c1.xlarge:
+      Arch: HVM64
+    c3.large:
+      Arch: HVM64
+    c3.xlarge:
+      Arch: HVM64
+    c3.2xlarge:
+      Arch: HVM64
+    c3.4xlarge:
+      Arch: HVM64
+    c3.8xlarge:
+      Arch: HVM64
+    c4.large:
+      Arch: HVM64
+    c4.xlarge:
+      Arch: HVM64
+    c4.2xlarge:
+      Arch: HVM64
+    c4.4xlarge:
+      Arch: HVM64
+    c4.8xlarge:
+      Arch: HVM64
+    g2.2xlarge:
+      Arch: HVMG2
+    g2.8xlarge:
+      Arch: HVMG2
+    r3.large:
+      Arch: HVM64
+    r3.xlarge:
+      Arch: HVM64
+    r3.2xlarge:
+      Arch: HVM64
+    r3.4xlarge:
+      Arch: HVM64
+    r3.8xlarge:
+      Arch: HVM64
+    i2.xlarge:
+      Arch: HVM64
+    i2.2xlarge:
+      Arch: HVM64
+    i2.4xlarge:
+      Arch: HVM64
+    i2.8xlarge:
+      Arch: HVM64
+    d2.xlarge:
+      Arch: HVM64
+    d2.2xlarge:
+      Arch: HVM64
+    d2.4xlarge:
+      Arch: HVM64
+    d2.8xlarge:
+      Arch: HVM64
+    hi1.4xlarge:
+      Arch: HVM64
+    hs1.8xlarge:
+      Arch: HVM64
+    cr1.8xlarge:
+      Arch: HVM64
+    cc2.8xlarge:
+      Arch: HVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      HVM64: ami-04b9e92b5572fa0d1
+      HVMG2: ami-0bba96c31d87e65d9
+    us-west-2:
+      HVM64: ami-06d51e91cea0dac8d
+      HVMG2: ami-02cbed67225579b2c
+    us-west-1:
+      HVM64: ami-0dd655843c87b6930
+      HVMG2: NOT_SUPPORTED
+    us-east-2:
+      HVM64: ami-0d5d9d301c853a04a
+      HVMG2: ami-0fb0129cd568fe35f
+    ca-central-1:
+      HVM64: ami-0d0eaed20348a3389
+      HVMG2: NOT_SUPPORTED
+Conditions:
+  ConfigureAlarms: !Equals
+    - !Ref SetupAlarms
+    - 'true'
+  CreateProdResources: !Equals
+    - !Ref EnvName
+    - prod
+  CreateDevResources: !Equals
+    - !Ref EnvName
+    - dev
+Resources:
+  sgCommonApp:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable 22 and 80 from the Common public subnet
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp:
+            Fn::ImportValue: !Sub "RSMS-${EnvName}-CidrCommonPublic1"
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp:
+            Fn::ImportValue: !Sub "RSMS-${EnvName}-CidrCommonPublic2"
+        - IpProtocol: tcp
+          FromPort: '8080'
+          ToPort: '8080'
+          SourceSecurityGroupId:
+            Fn::ImportValue: !Sub "default-${EnvName}-ALB-SG-ID"
+      VpcId:
+        Fn::ImportValue: !Sub "RSMS-${EnvName}-VPCID"
+      Tags:
+        - Key: Name
+          Value: !Sub "${CustomerName}-${EnvName}-sg-app"
+  CommonNLB:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Name: !Sub "${CustomerName}-${EnvName}-NLB"
+      Scheme: internet-facing
+      Subnets:
+        - Fn::ImportValue: !Sub "RSMS-${EnvName}-CommonPublicSubnet1"
+        - Fn::ImportValue: !Sub "RSMS-${EnvName}-CommonPublicSubnet2"
+      Type: network
+      Tags:
+        - Key: Name
+          Value: !Sub "${CustomerName}-${EnvName}-NLB"
+  NLBTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub "${CustomerName}-${EnvName}-NLB-TG"
+      Port: 22
+      Protocol: TCP
+      VpcId:
+        Fn::ImportValue: !Sub "RSMS-${EnvName}-VPCID"
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 60
+      Tags:
+        - Key: Name
+          Value: !Sub "${CustomerName}-${EnvName}-TG"
+  NLBListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref NLBTargetGroup
+      LoadBalancerArn: !Ref CommonNLB
+      Port: '22'
+      Protocol: TCP
+  AppServerGroup:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      LaunchConfigurationName: !Ref LaunchConfig
+      DesiredCapacity: '1'
+      MinSize: '0'
+      MaxSize: '1'
+      TargetGroupARNs:
+        - !Ref NLBTargetGroup
+        - {'Fn::ImportValue': !Sub "default-${EnvName}-TargetGroupALB"}
+      VPCZoneIdentifier:
+        - Fn::ImportValue: !Sub "RSMS-${EnvName}-CommonPrivateSubnet"
+      MetricsCollection: !If
+        - CreateProdResources
+        -
+          - Granularity: '1Minute'
+            Metrics:
+              - GroupInServiceInstances
+              - GroupTerminatingInstances
+        -
+          - !Ref 'AWS::NoValue'
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvName
+          PropagateAtLaunch: "true"
+        - Key: Customer
+          Value: !Ref "CustomerName"
+          PropagateAtLaunch: "true"
+        - Key: Name
+          Value: !Sub "${CustomerName}-${EnvName}"
+          PropagateAtLaunch: "true"
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT30M
+        Count: '1'
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: '1'
+        MaxBatchSize: '1'
+        PauseTime: PT30M
+        WaitOnResourceSignals: 'true'
+  LaunchConfig:
+    Type: 'AWS::AutoScaling::LaunchConfiguration'
+    Properties:
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap
+        - AWSRegionArch2AMI
+        - !Ref 'AWS::Region'
+        - !FindInMap
+          - AWSInstanceType2Arch
+          - !Ref InstanceType
+          - Arch
+      InstanceMonitoring: !If
+      - CreateProdResources
+      - 'true'
+      - 'false'
+      IamInstanceProfile: !Ref RootInstanceProfile
+      SecurityGroups:
+        - !Ref sgCommonApp
+      InstanceType: !Ref InstanceType
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          #Install ansible and awscli
+          sudo apt-add-repository ppa:ansible/ansible -y
+          sudo apt-get update -y
+          sudo apt-get -y install awscli ansible gridsite-clients
+
+          ### Get the creds
+          #user=`aws ssm get-parameter --name gituser --with-decryption --region=${AWS::Region} --output text |awk '{ print $4}'`
+          #git clone https://"$user":`urlencode $pass`@"$url"
+
+          ##################### Application ######################
+          #sed "s/XXXREGIONXXX/${AWS::Region}/g" -i group_vars/local
+
+          ## Tags can be customer or common
+          #ansible-playbook site.yml --tags "common"
+
+          cfn-signal -e $? --stack ${AWS::StackName} \
+          --resource AppServerGroup --region ${AWS::Region}
+          # EOF
+
+  EBSVolume:
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref EBSVolumeSize
+      Encrypted: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub "${CustomerName}-${EnvName}"
+        - Key: Customer
+          Value: !Ref CustomerName
+        - Key: Environment
+          Value: !Ref EnvName
+        - Key: ProductName
+          Value: !Ref ProductName
+        - Key: AZ
+          Value: !Select [0, !GetAZs '']
+    DeletionPolicy: Snapshot
+  RootInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2AttachEBS
+  EC2AttachEBS:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      RoleName: !Sub "EC2AttachEBS-${CustomerName}-${EnvName}"
+      Tags:
+        - Key: Name
+          Value: !Sub "${CustomerName}-${EnvName}-Role"
+  AlarmCPUHigh:
+    Condition: CreateProdResources
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: Send notification if the CPU is more than 90% for 10 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: '300'
+      EvaluationPeriods: '2'
+      Threshold: '90'
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AppServerGroup
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+  AlarmGroupInServiceSizeCount:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the number of ASG In Service Host Count < 1 for peroids of 1 minutes= 1 x 60s
+      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: '1'
+      Statistic: Average
+      MetricName: GroupInServiceInstances
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Namespace: AWS/AutoScaling
+      Period: '60'
+      Threshold: '1'
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AppServerGroup
+  AlarmGroupterminateCount:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the number of ASG terminate host is > 1 for peroids of 1 minutes= 1 x 60s
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: '1'
+      Statistic: Average
+      MetricName: GroupTerminatingInstances
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Namespace: AWS/AutoScaling
+      Period: '60'
+      Threshold: '0'
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AppServerGroup
+  AlarmTG4XXCount:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the number of HTTPCode_Target_4XX_Count is >= 20 for peroids of 1 minutes= 1 x 60s
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: '1'
+      Statistic: Average
+      MetricName: HTTPCode_Target_4XX_Count
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Namespace: AWS/ApplicationELB
+      Period: '60'
+      Threshold: '10'
+      Dimensions:
+        - Name: TargetGroup
+          Value: !Select [5, !Split [":", {'Fn::ImportValue': !Sub "default-${EnvName}-TargetGroupALB"}]]
+        - Name: LoadBalancer
+          Value: !Join
+            - '/'
+            - - 'app'
+              - !Select [2, !Split ["/", {'Fn::ImportValue': !Sub "ALBArn-${EnvName}"}]]
+              - !Select [3, !Split ["/", {'Fn::ImportValue': !Sub "ALBArn-${EnvName}"}]]
+  AlarmTG5XXCount:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the number of HTTPCode_Target_5XX_Count is >= 20 for peroids of 1 minutes= 1 x 60s
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: '1'
+      Statistic: Average
+      MetricName: HTTPCode_Target_5XX_Count
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Namespace: AWS/ApplicationELB
+      Period: '60'
+      Threshold: '10'
+      Dimensions:
+        - Name: TargetGroup
+          Value: !Select [5, !Split [":", {'Fn::ImportValue': !Sub "default-${EnvName}-TargetGroupALB"}]]
+        - Name: LoadBalancer
+          Value: !Join
+            - '/'
+            - - 'app'
+              - !Select [2, !Split ["/", {'Fn::ImportValue': !Sub "ALBArn-${EnvName}"}]]
+              - !Select [3, !Split ["/", {'Fn::ImportValue': !Sub "ALBArn-${EnvName}"}]]
+  AlarmhealthyHostALBTGCount:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the number of Healthy host in ALB TG is < 1 for peroids of 10 minutes= 10 x 60s
+      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: '2'
+      Statistic: Average
+      MetricName: HealthyHostCount
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Namespace: AWS/ApplicationELB
+      Period: '60'
+      Threshold: '1'
+      Dimensions:
+        - Name: TargetGroup
+          Value: !Select [5, !Split [":", {'Fn::ImportValue': !Sub "default-${EnvName}-TargetGroupALB"}]]
+        - Name: LoadBalancer
+          Value: !Join
+            - '/'
+            - - 'app'
+              - !Select [2, !Split ["/", {'Fn::ImportValue': !Sub "ALBArn-${EnvName}"}]]
+              - !Select [3, !Split ["/", {'Fn::ImportValue': !Sub "ALBArn-${EnvName}"}]]
+  AlarmhealthyHostNLBTGCount:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the number of Healthy host in NLB TG is < 1 for peroids of 10 minutes= 10 x 60s
+      ComparisonOperator: LessThanThreshold
+      EvaluationPeriods: '1'
+      Statistic: Average
+      MetricName: HealthyHostCount
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Namespace: AWS/NetworkELB
+      Period: '60'
+      Threshold: '1'
+      Dimensions:
+        - Name: TargetGroup
+          Value: !Select [5, !Split [":", !Ref NLBTargetGroup]]
+        - Name: LoadBalancer
+          Value: !Join
+            - '/'
+            - - 'net'
+              - !Select [2, !Split ["/", !Ref CommonNLB ]]
+              - !Select [3, !Split ["/", !Ref CommonNLB ]]
+  AlarmMemory:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the memory of the host is >= 90% for peroids of 5 minutes= 5 x 60s
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: '5'
+      Statistic: Average
+      MetricName: MemoryUtilization
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Namespace: System/Linux
+      Period: '60'
+      Threshold: '90'
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AppServerGroup
+  AlarmDisk:
+    Condition: CreateProdResources
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: If the Disk space /rsms of the host is >= 80% for peroids of 5 minutes= 5 x 60s
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: '5'
+      Statistic: Average
+      MetricName: DiskSpaceUtilization
+      AlarmActions:
+        - !ImportValue
+          'Fn::Sub': '${EnvName}-SNST'
+      Namespace: System/Linux
+      Period: '60'
+      Threshold: '80'
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref AppServerGroup
+        - Name: MountPath
+          Value: !Sub "/${ProductName}"
+        - Name: Filesystem
+          Value: '/dev/xvdk'
+  LCRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: dlm.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      RoleName: !Sub "LC-${CustomerName}-${EnvName}"
+      Tags:
+        - Key: Name
+          Value: !Sub "${CustomerName}-${EnvName}-LC-Role"
+  SnapshotLifeCyle:
+    Condition: CreateProdResources
+    Type: "AWS::DLM::LifecyclePolicy"
+    Properties:
+      Description: "Lifecycle Policy using CloudFormation for rsms"
+      State: "ENABLED"
+      ExecutionRoleArn: !GetAtt LCRole.Arn
+      PolicyDetails:
+        ResourceTypes:
+          - "VOLUME"
+        TargetTags:
+          - Key: ProductName
+            Value: !Ref ProductName
+        Schedules:
+          - Name: Daily Snapshots
+            TagsToAdd:
+              - Key: type
+                Value: DailySnapshot
+            CreateRule:
+              Interval: 24
+              IntervalUnit: HOURS
+              Times:
+                - '08:00'
+            RetainRule:
+              Count: 7
+            CopyTags: true
+  RolePolicies1:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub "${CustomerName}-Describe-Policy"
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ec2:AttachVolume"
+              - "ec2:DescribeInstances"
+              - "ec2:DescribeVolumeStatus"
+              - "ec2:DescribeVolumes"
+              - "ec2:ModifyInstanceAttribute"
+              - "ec2:DescribeVolumeAttribute"
+              - "ec2:DescribeInstanceStatus"
+              - "s3:Get*"
+              - "s3:List*"
+              - "cloudwatch:PutMetricData"
+              - "cloudwatch:GetMetricStatistics"
+              - "cloudwatch:ListMetrics"
+              - "ec2:DescribeTags"
+            Resource: "*"
+      Roles:
+        - !Ref EC2AttachEBS
+  RolePolicies2:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub "${CustomerName}-EBSAttach-Policy"
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ec2:AttachVolume"
+              - "ec2:DetachVolume"
+            Resource: "arn:aws:ec2:*:*:instance/*"
+            Condition:
+              StringEquals:
+                ec2:ResourceTag/Customer: !Ref CustomerName
+          - Effect: Allow
+            Action:
+              - "ec2:AttachVolume"
+              - "ec2:DetachVolume"
+            Resource: "arn:aws:ec2:*:*:volume/*"
+            Condition:
+              StringEquals:
+                ec2:ResourceTag/Customer: !Ref CustomerName
+      Roles:
+        - !Ref EC2AttachEBS
+  RolePolicies3:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub "${CustomerName}-SSM-RO-Policy"
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ssm:GetParameter"
+            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${CustomerName}-${EnvName}-*"
+      Roles:
+        - !Ref EC2AttachEBS
+  RolePolicies4:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub "${CustomerName}-SSM-RO-git"
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ssm:GetParameter"
+            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/git*"
+      Roles:
+        - !Ref EC2AttachEBS
+  RolePolicies5:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub "${CustomerName}-LC-Policy"
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ec2:AttachVolume"
+              - "ec2:CreateSnapshot"
+              - "ec2:CreateSnapshots"
+              - "ec2:DeleteSnapshot"
+              - "ec2:DescribeInstances"
+              - "ec2:DescribeVolumes"
+              - "ec2:DescribeSnapshots"
+              - "ec2:EnableFastSnapshotRestores"
+              - "ec2:DescribeFastSnapshotRestores"
+              - "ec2:DisableFastSnapshotRestores"
+              - "ec2:CopySnapshot"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "ec2:CreateTags"
+            Resource: "arn:aws:ec2:*::snapshot/*"
+      Roles:
+        - !Ref LCRole
+Outputs:
+  StackName:
+    Description: 'Stack name'
+    Value: !Sub "${AWS::StackName}"
+  NLBURL:
+    Description: The URL of Network Load Balancer
+    Value: !Join
+      - ''
+      - - ''
+        - !GetAtt
+          - CommonNLB
+          - DNSName
+  WhitelistedIPs:
+    Description: 'List of the whitelisted IPs'
+    Value: !Ref WhitelistedIPs
+    Export:
+      Name: !Sub "${CustomerName}-${EnvName}-whitelistedIps"
+  sgCommonApp:
+    Description: 'SG ID of the Common Server APP'
+    Value: !Ref sgCommonApp
+    Export:
+      Name: !Sub "${CustomerName}-${EnvName}-sg-App"
