@@ -1,0 +1,69 @@
+#!/bin/bash
+#Name: rotatexmlfile daily
+#Author: Sivanesan TamilMani
+#Description:To rotate all the files except last 3 days files.
+#
+cd /opt/nds/ams_proxy/work/ams/data-mining/
+rm -rf listofallfiles1.out
+creatingallFiles=`ls -t1 /opt/nds/ams_proxy/work/ams/data-mining/| egrep -v ""$(date +%Y%m%d)"|"$(date +%Y%m%d -d "2 day ago")"|"$(date +%Y%m%d -d "1 day ago")"" > listofallfiles1.out`
+
+finalFile=`cat listofallfiles1.out | grep ".xml$"  > listofallfiles2.out`
+
+listOFallfiles=(`cat listofallfiles2.out`)
+count_listOFallfiles=`expr "${#listOFallfiles[@]}" - 1`
+
+        for i in `seq 0 $count_listOFallfiles`
+        do
+        tar -czvf "${listOFallfiles[i]}".tar.gz "${listOFallfiles[i]}" --remove-files
+        done
+####EOF#####
+
+
+#Name:Monthly log rotate
+#Author:Sivanesan TamilMani
+#Description:Monthly log rotataion
+###########
+
+lastMonth=`date +'%b' -d 'last month'`
+lastMonth_year=`date +'%b%Y' -d 'last month'`
+gettingAllthefiles=`ls -l /opt/nds/ams_proxy/work/ams/data-mining/*.tar | grep "$lastMonth" | awk '{ print $9}' > lastmonthfiles.out`
+cd /opt/nds/ams_proxy/ams/work/data-mining/
+tarFile=`touch "$lastMonth_year"log_xml.tar`
+for i in `cat lastmonthfiles.out`
+do
+tar -rvf $tarFile $i --remove-files --remove-files
+done
+###EOF####
+#Name:logrotate_weekly
+#Author: Sivanesan TamilMani
+#Description: logrotating weekly files
+###
+###
+
+rm -rf listofallfiles_weekly.out
+dayofWeekend=`date +%w`
+currentDate=`date +%Y%m%d`
+startHere=`date +%Y%m%d -d "3 day ago"`
+cd /opt/nds/ams_proxy/work/ams/data-mining/
+
+for i in {3..9}
+do
+   let day"$i"=`date +%Y%m%d -d "$i day ago"`
+done
+
+tarFile=`touch ""$day9"-"$day3"_weekly_xml.tar"`
+
+if [ "$dayofWeekend" -eq "3" ]
+then
+
+creatingallFiles=`ls -t1 /opt/nds/ams_proxy/work/ams/data-mining/*.tar.gz | egrep "$day3|$day4|$day5|$day6|$day7|$day8|$day9" | awk -F\/ '{ print $8}' > listofallfiles_weekly.out`
+        for i in `cat listofallfiles_weekly.out`
+        do
+        tar -rvf ""$day9"-"$day3"_weekly_xml.tar" $i --remove-files
+        done
+else
+echo "This script will only run on wednesday"
+fi
+
+#####EOF####
+

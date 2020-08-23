@@ -1,0 +1,60 @@
+
+@cab-rep bin]# cat lsip
+#!/bin/bash
+#Descrption:This tool is to find the free ip in a network.
+#Author: Sivanesan TamilMani
+#Date: 22.05.2013
+##Script : 0.0.1
+
+d=`whereis fping |awk '{ print $2}'`
+        if [ -z "$d" ]
+        then
+        e="ping"
+        else
+        e="$d"
+        fi
+
+declare -a ip=(`echo "$1" | sed -e 's/\./ /g'`)
+for i in `seq 0 3`
+do
+        if [[ "${ip[$i]}" = *[[:digit:]]* ]] && [ "${ip[$i]}" -le 254 ] && [ ${#ip[@]} -eq 4 ]
+        then
+        let a$i=${ip[$i]} &> /dev/null
+        else
+        echo "Please enter a correct IP"
+        exit
+        fi
+done
+case "$e" in
+'/usr/sbin/fping')
+
+for k in `seq 1 254`
+do
+`$e "$a0.$a1.$a2.$k" -c 1 &> out1.txt`
+b=`cat out1.txt | grep xmt | cut -d: -f1| awk '{ print $1}'`
+c=`cat out1.txt| cut -d "=" -f2 | awk '{ print $1}' | sed -e 's/\// /g' | awk '{ print $2}' | sed -e '/^$/d'`
+        if [ $c -eq 0 ]
+        then
+        echo "$b is a free IP"
+        else
+        echo  "$b" > /dev/null
+        fi
+done
+rm -rf out1.txt
+;;
+'ping')
+for k in `seq 1 254`
+do
+f="$a0.$a1.$a2.$k"
+b=`$e "$f" -w 1 -c 1 | grep "received" | cut -d, -f2 | awk '{ print $1}'`
+        if [ "$b" -eq 0 ]
+        then
+        echo  "$f is a free IP"
+        fi
+done
+rm -rf out1.txt
+;;
+esac
+
+##EOF##
+
