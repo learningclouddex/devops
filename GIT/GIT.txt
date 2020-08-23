@@ -1,0 +1,108 @@
+GIT:
+
+git init 	:initialize a repository
+
+git add -A |git add . |git add .* |git add *xml  	: add files to staging area
+
+git commit -m "<mesg>" 	: Commiting the file to the master repositry
+
+git branch  : List the current and avaialble branch
+
+git branch <name>   : Create/List/Delete a  branch
+	- git branch -D <branchname> Delete in local repo
+
+git checkout <branchname>  : Change current working branch(like cd inlinux)
+
+git clone <repositry name>	: Clone a repository into a new directory
+
+git clean -f    : To delete from staging
+
+git log : List the history of the reason activities
+
+git status	: List the current working tree status
+
+git show :	Show variuos types of object
+
+git pull     :  Fetch from and merge with another repository or a local branch
+
+git push      : Update remote refs along with associated objects
+
+	- Before pushing we have to save the credentials of the github repositry
+	- git remote set-url origin https://XXXUserXXX:'XXXpasswordXXX'@XXXrepourlXX.git
+	- git push --set-upstream origin <branchname>  : to push  a branch to github
+	- git push origin --delete <githubbrancname>
+
+git merge : merge two braches together
+
+git rm      :   Remove files from the working tree and from the index
+
+git rm --cached: Remove files only from index not working tree
+
+git log: List the past history of commits
+
+git revert <name of the bad commit> : To revert the bad commits
+
+git mv : Rename the file, which renames in the working area and moves it to index
+
+git pull origin : This will pull from the remote server and merge into the current branch
+
+.gitignore    :  a file created at the .git directory to ignore files being staged or commited
+
+Permanently authenticating with Git repositories,
+
+Run following command to enable credential caching.
+
+$ git config credential.helper store
+$ git push https://github.com/repo.git
+
+Username for 'https://github.com': <USERNAME>
+Password for 'https://USERNAME@github.com': <PASSWORD>
+Use should also specify caching expire,
+
+git config --global credential.helper 'cache --timeout 7200'
+
+===========================
+
+git clean -df ### Clean all the untracked files
+
+
+Advanced:
+
+git reflog	: Once delete from history, to recover deleted history again
+
+git cherry-pick <hashidof comit> : This will move the commit done in one branch to another: have to be run from destination branch
+
+git fetch origin :  Download objects and refs from another repository
+
+git reset --soft : Just moves the HEAD to the mentioned commit and removes all the other commits after it, while keeping our work like the current working area and staging untouch
+
+git reset --mixed: Copy the files from the repository to the staging only; This is the default one
+
+git reset --hard : Copy the files from the repo to the staging and working area
+
+git reset --soft HEAD~N && git commit : This will squash the last  N commits into single commit (or)
+
+git reset --soft HEAD~N && git commit --edit -m "$(git log --format=%B --reverse .HEAD@{N})" ## Squash last N commits, and addding all the commit message into single one
+
+git reset --soft : Just moves the HEAD to the mentioned commit and removes all the other commits after it, while keeping our work like the current working area and staging untouch
+
+git reset --mixed: Copy the files from the repository to the staging only; This is the default one
+
+git reset --hard : Copy the files from the repo to the staging and working area
+
+git reset --soft HEAD~N && git commit : This will squash the last  N commits into single commit (or)
+
+git reset --soft HEAD~N && git commit --edit -m "$(git log --format=%B --reverse .HEAD@{N})" ## Squash last N commits, and addding all the commit message into single one
+
+============ Recovery comimts
+
+git revert <hash> : Recovers to the commmit we mentioned
+
+To receover files after git reset --hard
+git reflog : Show the last activirties we had done, approx saves some 20 days data
+git checkout <hash> : This will bring to the required commit
+git log: To verify it
+Next this will be in detached state, which means it will not be under any branch, hence it will not be saved, to save it
+create branch
+git branch backup
+===============
