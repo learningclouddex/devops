@@ -1,0 +1,251 @@
+Many types we can install k8s cluster
+
+Self managed services:
+Minikube - desktop
+KOPS - AWS
+kubespray - production grade ansible installation, on any permises
+
+Manged services:
+EKS - AWS managed K8s cluster
+GKE - Google managed K8s cluster
+AKS - Windows managed K8s cluster
+
+Minikube installation:
+
+=============================
+ install Minikube on Ubuntu 18.04 or 20.04.
+ sudo apt-get update -y
+ sudo apt-get upgrade -y
+ sudo apt-get install curl
+ sudo apt-get install apt-transport-https
+ sudo apt install virtualbox virtualbox-ext-pack
+ wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+ sudo cp minikube-linux-amd64 /usr/local/bin/minikube
+ sudo chmod 755 /usr/local/bin/minikube
+ minikube version
+ curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+ chmod +x ./kubectl
+ sudo mv ./kubectl /usr/local/bin/kubectl
+ kubectl version -o json
+ minikube start
+ kubectl config view
+ kubectl cluster-info
+======================================
+
+ Online labs: https://labs.play-with-k8s.com/
+
+
+ Kubespray installation:
+ ============
+
+ https://github.com/kubernetes-incubator/kubespray
+
+# setenforce 0
+# sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+
+Prerequisites:
+
+Perform the following steps on all servers that need to be added in cluster:
+
+1. Disable SELinux:
+
+# setenforce 0
+# sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+
+2.  Set the firewall rules on all “master” Servers:
+
+# firewall-cmd --permanent --add-port=6443/tcp
+# firewall-cmd --permanent --add-port=2379-2380/tcp
+# firewall-cmd --permanent --add-port=10250/tcp
+# firewall-cmd --permanent --add-port=10251/tcp
+# firewall-cmd --permanent --add-port=10252/tcp
+# firewall-cmd --permanent --add-port=10255/tcp
+# firewall-cmd --reload
+# modprobe br_netfilter
+# echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
+# sysctl -w net.ipv4.ip_forward=1
+
+On all “node” servers:
+
+# firewall-cmd --permanent --add-port=10250/tcp
+# firewall-cmd --permanent --add-port=10255/tcp
+# firewall-cmd --permanent --add-port=30000-32767/tcp
+# firewall-cmd --permanent --add-port=6783/tcp
+# firewall-cmd  --reload
+# echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
+# sysctl -w net.ipv4.ip_forward=1
+ 
+If possible, you can stop firewall service on all servers in the cluster:
+ 
+# systemctl stop firewalld
+ 
+3. Install some prerequisites packages on all servers in the cluster
+ 
+Ansible:
+  
+# sudo yum install epel-release
+# sudo yum install ansible
+Jinja:
+
+# easy_install pip
+# pip2 install jinja2 --upgrade
+Python:
+
+# sudo yum install python36 –y
+ 
+4. Enable passwordless login between all servers in the cluster.
+ 
+So at this stage all the preparation work is completed. Now let’s start with Kubespray activities.
+In the example below, we will be installing a 5 server cluster (3 as Master & all 5 as nodes)
+ 
+5. Git clone the Kubespray repository on one of the master servers:
+ 
+# git clone https://github.com/kubernetes-incubator/kubespray.git
+ 
+6. Go to the ‘Kubespray’ directory and install all dependency packages
+ 
+Install dependencies from requirements.txt)
+ 
+# cd kubespray
+# sudo pip install -r requirements.txt
+
+ Note:   While installing all requirements packages, if you get errors related to “requests” package, follow the steps below:
+
+ -  Download the latest “requests” package (.tar.gz file)
+ -  Untar the tar file and run command ---  python setup.py install
+ -  If the requests issue still doesn't resolve, go to "/usr/lib/python2.7/site-packages" and rename all requests files and folders there, and re-run the requirements.txt deployment.
+
+7.  Copy inventory/sample as inventory/mycluster (change “mycluster” to any name you want for the cluster)
+ 
+8.  Update the Ansible inventory file with inventory builder
+
+# declare -a IPS=(172.16.2.2 172.16.2.3 172.16.2.4 172.16.2.5 172.16.2.6)
+# CONFIG_FILE=inventory/mycluster/hosts.ini python36 contrib/inventory_builder/inventory.py ${IPS[@]}
+ 
+ - It should generate the “inventory/mycluster/hosts.ini” file with following hosts mapping, you can change it as per your need.
+ 
+ [all]
+ node1    ansible_host=172.16.2.2 ip=172.16.2.2
+ node2    ansible_host=172.16.2.3 ip=172.16.2.3
+ node3    ansible_host=172.16.2.4 ip=172.16.2.4
+ node4    ansible_host=172.16.2.5 ip=172.16.2.5
+ node5    ansible_host=172.16.2.6 ip=172.16.2.6
+ [kube-master]
+ node1
+ node2
+ node3
+ [kube-node]
+ node1
+ node2
+ node3
+ node4
+ node5
+ [etcd]
+ node1
+ node2
+ node3
+ [k8s-cluster:children]
+ kube-node
+ kube-master
+ [calico-rr]
+ [vault]
+ node1
+ node2
+ node3
+ 
+9.  Review and change parameters under ``inventory/mycluster/group_vars``
+ 
+     inventory/mycluster/group_vars/all.yml
+     inventory/mycluster/group_vars/k8s-cluster.yml    
+ 
+Some changes you may want to look for are:
+ 
+-  Changingthe network as per your liking in “inventory/mycluster/group_vars/k8s-cluster.yml”
+ 
+# Choose network plugin (cilium, calico, contiv, weave or flannel)
+# Can also be set to 'cloud', which lets the cloud provider setup appropriate routing kube_network_plugin: weave
+ - In “inventory/mycluster/group_vars/all.yml”  uncomment the following line to enable metrics to fetch the cluster resource utilization data without this HPAs will not work (for ‘kubectl top nodes’ & ‘kubectl top pods’ commands to work)
+ 
+# The read-only port for the Kubelet to serve on with no authentication/authorization. Uncomment to enable.
+ kube_read_only_port: 10255
+
+Now we are all set for the big, red switch:
+ 
+10.   Deploy Kubespray with Ansible Playbook
+ 
+# ansible-playbook -i inventory/mycluster/hosts.ini cluster.yml
+
+Once this step is completed, the multi-master Kubernetes cluster should be ready for deploying your application.
+ 
+-  Check the status of the cluster now and all nodes should be in ‘Ready’ status:
+ 
+# kubectl get nodes
+ NAME      STATUS    ROLES         AGE       VERSION
+ node1     Ready     master,node   4m        v1.10.3
+ node2     Ready     master,node   4m        v1.10.3
+ node3     Ready     master,node   4m        v1.10.3
+ node4     Ready     node          4m        v1.10.3
+ node5     Ready     node          4m        v1.10.3
+ 
+ 
+ ===================================================================
+ 
+ Additional steps might be needed while working with K8s cluster
+ 1.  Adding a new node (node6 - 172.16.2.7) to a cluster: If you wish to add a new node server into the cluster, perform following steps:
+ 
+ -  Add the server node-6 to “inventory/mycluster/hosts.ini” file
+ 
+     In “[all]” section:
+ 
+ [all]
+ node1    ansible_host=172.16.2.2 ip=172.16.2.2
+ node2    ansible_host=172.16.2.3 ip=172.16.2.3
+ node3    ansible_host=172.16.2.4 ip=172.16.2.4
+ node4    ansible_host=172.16.2.5 ip=172.16.2.5
+ node5    ansible_host=172.16.2.6 ip=172.16.2.6
+ node6    ansible_host=172.16.2.7 ip=172.16.2.7
+ In “[kube-node]” section:  (It can be kept along with other 5 nodes or as a single line also, won’t matter)
+ 
+ [kube-node]
+ node1
+ node2
+ node3
+ node4
+ node5
+ node6
+ OR
+ 
+ [kube-node]
+ node6
+ Now run the following command to scale your cluster:
+ 
+#  ansible-playbook -i inventory/mycluster/hosts.ini scale.yml
+ 
+ 
+2.  Removing a new node (node6 - 172.16.2.7) from cluster:
+ 
+-  Keep the server to “inventory/mycluster/hosts.ini” file
+ 
+     In “[all]” section:
+ 
+     
+ [all]
+ node1    ansible_host=172.16.2.2 ip=172.16.2.2
+ node2    ansible_host=172.16.2.3 ip=172.16.2.3
+ node3    ansible_host=172.16.2.4 ip=172.16.2.4
+ node4    ansible_host=172.16.2.5 ip=172.16.2.5
+ node5    ansible_host=172.16.2.6 ip=172.16.2.6
+ node6    ansible_host=172.16.2.7 ip=172.16.2.7
+ In the “[kube-node]” section keep ONLY the node server which needs to be removed from cluster. So in this example, we will keep only “node6” mentioned.  (If any other nodes are kept in here, they will also be removed from the cluster)
+ 
+ [kube-node]
+ node6
+ Now run the following command to scale your cluster:
+ 
+#  ansible-playbook -i inventory/mycluster/hosts.ini remove-node.yml
+ 3.   Reset the entire cluster for fresh installation:
+ 
+ Keep the “hosts.ini” updated properly with all servers mentioned in the correct sections, and run   the following command:
+ 
+#  ansible-playbook -i inventory/mycluster/hosts.ini reset.yml
+ ============
