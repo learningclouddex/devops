@@ -1,0 +1,51 @@
+VOLUME:
+Volumes are like mount points which can be extracted from container and placed in one common location where other
+container can access it too
+
+
+Create a volume:
+
+$ docker volume create data
+List volumes:
+
+$ docker volume ls
+
+local               data
+
+Inspect a volume:
+
+$ docker volume inspect data
+[
+    {
+        "Driver": "local",
+        "Labels": {},
+        "Mountpoint": "/var/lib/docker/volumes/data/_data",
+        "Name": "data",
+        "Options": {},
+        "Scope": "local"
+    }
+]
+
+
+$ docker run -d -v hello:/world busybox ls /world
+
+$ docker volume create --driver local \
+    --opt type=nfs \
+    --opt o=addr=192.168.1.1,rw \
+    --opt device=:/path/to/dir \
+    foo
+
+*docker run -it -v /data --name=<containername> ubuntu:15.04 /bin/bash
+<<this command will run the container in
+interactive mode; -v implies to create a new volume and mount it in the root file system, here we create /data folder
+
+*docker run -it --volumes-from=<containerwhichhas the volumes> ubuntu:15.04 /bin/bash <<<this will run a new container
+with the all the volumes that have been mounted in the mentioned docker
+
+VOLUME /data<-----to mention in docker file
+
+To mount a folder that present in the host inside a container,
+*docker run -v /data:/data
+
+To delete docker volume
+*docker rm -v <containerid><<delete the container and the volumes

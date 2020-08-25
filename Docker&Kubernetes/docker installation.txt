@@ -1,0 +1,42 @@
+This file teaches how to install docker in your linux machines.
+
+=======
+Docker installation -  https://docs.docker.com/engine/install/
+
+Amazon Linux:
+
+sudo yum update -y
+sudo amazon-linux-extras install docker
+sudo yum install docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+exit;
+docker info
+=======
+
+Linux:
+
+Remove old version
+$ sudo yum remove docker*
+$ sudo yum install -y yum-utils
+$ sudo yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+$ sudo yum install docker* containerd.io
+$ sudo systemctl start docker
+
+Option2:
+
+$ sudo yum install /path/to/package.rpm
+$ sudo systemctl start docker
+
+========
+
+Windows:
+
+https://docs.docker.com/docker-for-windows/install/
+
+Just Download and click next.
+
+========
+

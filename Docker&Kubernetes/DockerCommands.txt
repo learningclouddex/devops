@@ -1,0 +1,24 @@
+
+Docker day to day commands:
+
+*docker run - to run a container
+*docker version - to list the docker version
+*docker info - to get the entire lists of images,containers, running, stopped,etc.
+*docker ps - to list the running container
+*docker ps -a : to view the all the running and stopped containers
+*docker images: to view the avaialbe containers
+*always the images with the instance tag, "latest" will be taken by default
+*DockerHub is like github, public internet
+*Whenever Docker run command is ran---Docker client-> Docker Deamon(checks images locally)--> else go for dockergithub-->copies locally
+*Containers - running images
+*Images - Stopped Containers
+*docker pull <imagename> - this will pull the images from the dockerhub/locally if avaialble
+*docker pull ubuntu:14.0.4 - to pull specific version  of the imagemage
+*docker rmi <imagename> - to delete the downloaded images
+*docker start <container>
+*docker stop <container>
+*docker rm <container>
+*docker attach <container><---to log into inside the container
+*docker run -d --name web -p 80:8080 nigelpoulton/pluralsight-docker-ci :(-p  run in background ;--name web;-p port mapping)
+*docker run -it --name temp <imagename> /bin/bash:(-it run  in interatctive mode,i.e. connect to a tty) ; CTRL+PQ--> to logout of the terminal without exiting
+*docker exec -it <containerid> /bin/bash
