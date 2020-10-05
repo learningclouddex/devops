@@ -3,7 +3,7 @@ sudo wget https://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-ma
 sudo sed -i s/\$releasever/6/g /etc/yum.repos.d/epel-apache-maven.repo
 sudo yum install -y apache-maven
 sudo wget https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
-sudo yum localinstall mysql57-community-release-el7-11.noarch.rpm
+sudo yum localinstall mysql57-community-release-el7-11.noarch.rpm -y
 [root@localhost ~]# systemctl stop mysqld
 [root@localhost ~]# systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
 [root@localhost ~]# systemctl start mysqld
