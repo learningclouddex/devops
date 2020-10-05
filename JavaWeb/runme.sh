@@ -28,7 +28,6 @@ PATH=$PATH:$HOME/.local/bin:$HOME/bin:/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.252.
 
 export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk/"
 
-
 git clone https://github.com/learningclouddex/devops.git
 cd devops/JavaWeb/User/User
 mvn package
@@ -48,3 +47,7 @@ cd /home/ec2-user/apache-tomcat-9.0.38/bin/
 ## Access the page
 ##http://<IP>:8080/User/home
 ##http://<IP>:8080/User/users
+
+
+## s3 plugins for jenkins
+##https://plugins.jenkins.io/s3/
