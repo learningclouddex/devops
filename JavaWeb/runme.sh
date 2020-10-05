@@ -44,3 +44,7 @@ touch /home/ec2-user/apache-tomcat-9.0.38/logs/catalina.out
 chmod +x /home/ec2-user/apache-tomcat-9.0.38/webapps/User.war
 cd /home/ec2-user/apache-tomcat-9.0.38/bin/
 ./shutdown.sh && ./startup.sh
+
+## Access the page
+##http://<IP>:8080/User/home
+##http://<IP>:8080/User/users
