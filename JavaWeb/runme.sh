@@ -6,14 +6,13 @@ sudo wget https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
 sudo yum localinstall mysql57-community-release-el7-11.noarch.rpm -y
 sudo yum install mysql-server -y
 ##Execut as root
-systemctl stop mysqld
-systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
-systemctl start mysqld
+sudo systemctl stop mysqld
+sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
+sudo systemctl start mysqld
 mysql -u root
-
-use mysql;
-ALTER USER `root`@`localhost` IDENTIFIED BY 'admin', `root`@`localhost` PASSWORD EXPIRE NEVER;
-flush privileges;
+   use mysql;
+   ALTER USER `root`@`localhost` IDENTIFIED BY 'admin', `root`@`localhost` PASSWORD EXPIRE NEVER;
+   flush privileges;
 sudo systemctl start mysqld.service
 
 sudo yum install java-1.8.0
