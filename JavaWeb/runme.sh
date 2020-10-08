@@ -23,7 +23,7 @@ sudo /usr/sbin/alternatives --config java
 sudo /usr/sbin/alternatives --config javac
 
 cat .bash_profile
-PATH=$PATH:$HOME/.local/bin:$HOME/bin:/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.252.b09-2.amzn2.0.1.x86_64/jre/bin
+PATH=$PATH:$HOME/.local/bin:$HOME/bin:/home/ec2-user/bin:/usr/lib/jvm/java-1.8.0-openjdk/jre/bin/
 
 export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk/"
 
