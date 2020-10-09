@@ -99,11 +99,11 @@
     mode: '0644'
 
 - name: Check if it is running
-  shell: ps -ef |grep -i flask|grep -io python
+  shell: ps -ef |grep -io flask|head -n 1
   register: checkrun
 
 - name: Run the flask
   shell: 'FLASK_APP=/opt/app.py flask run --host=0.0.0.0 &'
   async: 45
   poll: 0
-  when: checkrun.stdout == ""
+  when: checkrun.stdout == "flask"
