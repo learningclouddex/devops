@@ -32,8 +32,8 @@ pipeline {
    			 steps{
        			sshagent(credentials : ['sivakey']) {
                 sh 'ssh -o StrictHostKeyChecking=no ec2-user@ec2-54-166-161-206.compute-1.amazonaws.com hostname'
-                sh 'ssh -v ec2-user@ec2-54-166-161-206.compute-1.amazonaws.com "cd /home/ec2-user/apache-tomcat-9.0.38/webapps/&&pwd&&aws s3 cp s3://testsiva/User.war .;"'
-                sh 'ssh -v ec2-user@ec2-54-166-161-206.compute-1.amazonaws.com "cd /home/ec2-user/apache-tomcat-9.0.38/bin/&& ./startup.sh &&./shutdown.sh"'
+                sh 'ssh -v ec2-user@ec2-54-166-161-206.compute-1.amazonaws.com "cd /home/ec2-user/apache-tomcat-9.0.38/webapps/&&aws s3 cp s3://testsiva/User.war .;"'
+                sh 'ssh -v ec2-user@ec2-54-166-161-206.compute-1.amazonaws.com "cd /home/ec2-user/apache-tomcat-9.0.38/bin/ &&./shutdown.sh&& ./startup.sh"'
         }
         }
 
