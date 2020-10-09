@@ -49,7 +49,7 @@
 - name: Update and upgrade apt packages
   become: true
   apt:
-    upgrade: yes
+    upgrade: "yes"
   when: ansible_facts['os_family'] == 'Debian' 
 
 - name: Make a copy of security repos
