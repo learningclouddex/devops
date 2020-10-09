@@ -41,15 +41,15 @@ Steps:
         ubuntu - db(group)
         
         amazon - web(group)
-        
-8. Run the playbook,
-
-        # cd /home/ec2-user/devops/Ansible
-        #ansible-playbook -i inventory.ini site.yml 
 
 Note:!
 
 Dont change the above order, else playbook will fail!
+
+8. Run the playbook,
+
+        # cd /home/ec2-user/devops/Ansible
+        #ansible-playbook -i inventory.ini site.yml 
 
 9.Test:
 
