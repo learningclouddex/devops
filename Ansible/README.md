@@ -38,7 +38,7 @@ Steps:
 
 7.Also get the private ip of the other two instances.
        
-        ubuntu - db(group)
+        ubuntu 18.0- db(group)
         
         amazon - web(group)
 
