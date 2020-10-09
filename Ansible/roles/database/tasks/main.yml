@@ -1,4 +1,3 @@
----
 # tasks file for db setup
 
 - name: Saving the vars to be used in other roles customer type common or customer
@@ -46,12 +45,12 @@
   become: yes
 
 - name: Check if table exists
-  command: echo "{{ DBPASSWORD }}"|mysql -u root -p -h localhost employee_db -e "show tables;"|grep employees -o
+  shell: mysql -u root -p{{ DBPASSWORD }} -h localhost employee_db -e "show tables;" 2>/dev/null|grep employees -o;echo
   register: command_output
 
 - name: create a table in mysqlDB
   command: mysql -u root -p{{ DBPASSWORD }} -h localhost {{ DBNAME }} --skip-column-names --execute "CREATE TABLE employees (name VARCHAR(20));"
-  when: command_output.stdout == "employees"
+  when: command_output.stdout == ""
 
 - name: insert a row
   command: mysql -u root -p{{ DBPASSWORD }} -h localhost {{ DBNAME }} --skip-column-names --execute "INSERT INTO employees VALUES ('JOHN');"
