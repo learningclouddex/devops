@@ -1,55 +1,68 @@
 Steps:
 
-Spin 3 t2 instances
+1.Spin 3 t2 instances
 
-1.Amazon Linux - Bastion
+    1.Amazon Linux - Bastion
 
-2.Ubuntu
+    2.Ubuntu
 
-3.Amazon Linux
+    3.Amazon Linux
 
-Spin in us-east-1, default vpc
+2.Spin in us-east-1, default vpc
 
-Create Security Group
-Inbound:
-22 all
-80 all
-within VPC all all
+3.Create Security Group
 
-After spinning the instances, log into the bastion host
+  Inbound:
+  
+  22 all
+  
+  80 all
+  
+  within VPC all all
 
-copy the pem key to /tmp/<keyname>/pem
-#chmod 400 <key>.pem
+4.After spinning the instances, log into the bastion host
 
-#sudo yum install ansible -y
+    copy the pem key to /tmp/<keyname>.pem
+    
+    #chmod 400 <key>.pem
 
-The above command will fail and it will give the right repository url, just type it.
+    #sudo yum install ansible -y
 
-#sudo yum install git tree -y
+5.The above command will fail and it will give the right repository url, just type it.
 
-#git clone <the repo url>
+    #sudo yum install git tree -y
 
-Goto, Ansible directory
-Open the inventory.ini file and change the location of the key file
+    #git clone <the repo url>
 
-Also get the private ip of the other two instances.
-ubuntu - db(group)
-amazon - web(group)
+6.Goto, Ansible directory, Open the inventory.ini file and change the location of the key file
+
+7.Also get the private ip of the other two instances.
+       
+        ubuntu - db(group)
+        
+        amazon - web(group)
 
 Note:!
+
 Dont change the above order, else playbook will fail!
 
-Test:
+8.Test:
+
 Goto browser and type the following,
 
 DB Server,
-http://<publicip>:5000/
-http://<IP>:5000/how%20are%20you
-http://18.207.233.254:5000/read%20from%20database
+
+      http://<publicip>:5000/
+      
+      http://<IP>:5000/how%20are%20you
+      
+      http://18.207.233.254:5000/read%20from%20database
 
 Webserver:
-http://<publicip>/flower.jpg
 
-Cleanup:
+  http://<publicip>/flower.jpg
+
+9.Cleanup:
+
 Delete all the instances, once done
 
