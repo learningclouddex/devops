@@ -1,8 +1,11 @@
 Steps:
 
 Spin 3 t2 instances
+
 1.Amazon Linux - Bastion
+
 2.Ubuntu
+
 3.Amazon Linux
 
 Spin in us-east-1, default vpc
