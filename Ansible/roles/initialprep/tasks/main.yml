@@ -76,7 +76,6 @@
       - jq
       - python-dev
       - python-pip
-      - python3-pip
       - wget
       - ruby
       - build-essential
