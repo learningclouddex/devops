@@ -44,7 +44,8 @@ Steps:
         
 8. Run the playbook,
 
-        #
+        # cd /home/ec2-user/devops/Ansible
+        #ansible-playbook -i inventory.ini site.yml 
 
 Note:!
 
