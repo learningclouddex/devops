@@ -18,9 +18,12 @@ After spinning the instances, log into the bastion host
 copy the pem key to /tmp/<keyname>/pem
 #chmod 400 <key>.pem
 
-#yum install ansible -y
+#sudo yum install ansible -y
+
 The above command will fail and it will give the right repository url, just type it.
-#yum install git tree -y
+
+#sudo yum install git tree -y
+
 #git clone <the repo url>
 
 Goto, Ansible directory
