@@ -13,12 +13,12 @@ Steps:
 3.Create Security Group
 
   Inbound:
-  
-  22 all
-  
-  80 all
-  
-  within VPC all all
+
+      22 all
+
+      80 all
+
+      all all within VPC 
 
 4.After spinning the instances, log into the bastion host
 
@@ -32,7 +32,7 @@ Steps:
 
     #sudo yum install git tree -y
 
-    #git clone <the repo url>
+    #git clone https://github.com/learningclouddex/devops.git
 
 6.Goto, Ansible directory, Open the inventory.ini file and change the location of the key file
 
@@ -41,12 +41,16 @@ Steps:
         ubuntu - db(group)
         
         amazon - web(group)
+        
+8. Run the playbook,
+
+        #
 
 Note:!
 
 Dont change the above order, else playbook will fail!
 
-8.Test:
+9.Test:
 
 Goto browser and type the following,
 
@@ -60,7 +64,7 @@ DB Server,
 
 Webserver:
 
-  http://<publicip>/flower.jpg
+     http://<publicip>/flower.jpg
 
 9.Cleanup:
 
