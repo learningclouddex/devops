@@ -16,7 +16,7 @@
 <body>
 	<div class="container">
 	  	<div class="starter-template">
-	  		<h2>Please Provide Users details</h2>
+	  		<h2>Please Provide User details</h2>
 			<form action="/User/createUser" method="post">
 				<table class="table table-bordered">
 					<tr>
