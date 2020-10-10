@@ -17,6 +17,8 @@ Steps:
       22 all
 
       80 all
+      
+      5000 all
 
       all all within VPC 
 
