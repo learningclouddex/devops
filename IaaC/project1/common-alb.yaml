@@ -10,10 +10,6 @@ Parameters:
     Default: "dev"
     AllowedPattern: '^[a-zA-Z]{0,5}'
     ConstraintDescription: Max 5 characters - eg, dev, uat, prod
-  ALBCertArn:
-    Description: Provide the certification ARN for Network Load Balancer
-    Type: String
-    Default: "arn:aws:acm:us-east-1:769377447000:certificate/f901e7cc-8b44-46c2-93fd-cef657562617"
   EmailAddress:
     Description: Email Address for SNS topic / Alerts
     Type: String
@@ -48,8 +44,6 @@ Resources:
       LoadBalancerArn: !Ref ApplicationLoadBalancer
       Port: '443'
       Protocol: HTTPS
-      Certificates:
-        - CertificateArn: !Ref ALBCertArn
   customer1ListenerRule1:
     Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
     Properties:
