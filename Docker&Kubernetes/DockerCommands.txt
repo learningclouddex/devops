@@ -22,3 +22,5 @@ Docker day to day commands:
 *docker run -d --name web -p 80:8080 nigelpoulton/pluralsight-docker-ci :(-p  run in background ;--name web;-p port mapping)
 *docker run -it --name temp <imagename> /bin/bash:(-it run  in interatctive mode,i.e. connect to a tty) ; CTRL+PQ--> to logout of the terminal without exiting
 *docker exec -it <containerid> /bin/bash
+*docker build --tag blasteravismaster/sshd_server:latest .
+*docker push
