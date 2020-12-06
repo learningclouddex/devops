@@ -34,13 +34,13 @@ mvn package
 #Tomcat installation:
 
 wget https://downloads.apache.org/tomcat/tomcat-9/v9.0.40/bin/apache-tomcat-9.0.40.tar.gz
-tar zxvf apache-tomcat-9.0.38.tar.gz
+tar zxvf apache-tomcat-9.0.40.tar.gz
 
-mkdir -p /home/ec2-user/apache-tomcat-9.0.38/logs/
-touch /home/ec2-user/apache-tomcat-9.0.38/logs/catalina.out
- cp /home/ec2-user/devops/JavaWeb/User/User/target/User.war /home/ec2-user/apache-tomcat-9.0.38/webapps/
-chmod +x /home/ec2-user/apache-tomcat-9.0.38/webapps/User.war
-cd /home/ec2-user/apache-tomcat-9.0.38/bin/
+mkdir -p /home/ec2-user/apache-tomcat-9.0.40/logs/
+touch /home/ec2-user/apache-tomcat-9.0.40/logs/catalina.out
+ cp /home/ec2-user/devops/JavaWeb/User/User/target/User.war /home/ec2-user/apache-tomcat-9.0.40/webapps/
+chmod +x /home/ec2-user/apache-tomcat-9.0.40/webapps/User.war
+cd /home/ec2-user/apache-tomcat-9.0.40/bin/
 ./shutdown.sh && ./startup.sh
 
 ## Access the page
