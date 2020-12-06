@@ -33,7 +33,7 @@ mvn package
 
 #Tomcat installation:
 
-wget https://downloads.apache.org/tomcat/tomcat-9/v9.0.38/bin/apache-tomcat-9.0.38.tar.gz
+wget https://downloads.apache.org/tomcat/tomcat-9/v9.0.40/bin/apache-tomcat-9.0.40.tar.gz
 tar zxvf apache-tomcat-9.0.38.tar.gz
 
 mkdir -p /home/ec2-user/apache-tomcat-9.0.38/logs/
